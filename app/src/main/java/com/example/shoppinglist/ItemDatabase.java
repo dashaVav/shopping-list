@@ -2,19 +2,24 @@ package com.example.shoppinglist;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-public class DatabaseHelper extends SQLiteOpenHelper {
+import java.util.ArrayList;
+
+public class ItemDatabase extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "database.db";
     private static final int SCHEMA = 1;
     static final String TABLE = "items";
     public static final String COLUMN_ID = "_id";
     public static final String COLUMN_TEXT = "text";
     public static final String COLUMN_IS_CHECKED = "isChecked";
+    private final SQLiteDatabase db;
 
-    public DatabaseHelper(Context context) {
+    public ItemDatabase(Context context) {
         super(context, DATABASE_NAME, null, SCHEMA);
+        db = getReadableDatabase();
     }
 
     @Override
@@ -26,33 +31,46 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-//        db.execSQL("DROP TABLE IF EXISTS "+TABLE);
-//        onCreate(db);
     }
 
-    public Item saveItem(SQLiteDatabase db, String itemText) {
+    public Item saveItem(String itemText) {
         Item item = new Item(itemText);
-
-        ContentValues cv = new ContentValues();
-        cv.put(COLUMN_TEXT, item.getText());
-        cv.put(COLUMN_IS_CHECKED, item.getIsCheckedAsInt());
-
-        long result = db.insert(TABLE, null, cv);
+        long result = db.insert(TABLE, null, createContentValuesFromItem(item));
         item.setId(result);
         return item;
     }
 
-    public void updateItem(SQLiteDatabase db, Item item) {
+    private ContentValues createContentValuesFromItem(Item item) {
         ContentValues cv = new ContentValues();
         cv.put(COLUMN_TEXT, item.getText());
         cv.put(COLUMN_IS_CHECKED, item.getIsCheckedAsInt());
-        System.out.println(item.getId());
-        System.out.println(db.update(DatabaseHelper.TABLE, cv, DatabaseHelper.COLUMN_ID + "=" + item.getId(), null));
+        return cv;
+    }
+
+    public void updateItem(Item item) {
+        db.update(ItemDatabase.TABLE, createContentValuesFromItem(item),
+                ItemDatabase.COLUMN_ID + "=" + item.getId(), null);
     }
 
     public void delete(Item item) {
-        db.delete(DatabaseHelper.TABLE, "_id = ?", new String[]{String.valueOf(item.getId())});
+        db.delete(ItemDatabase.TABLE, "_id = ?",
+                new String[]{String.valueOf(item.getId())});
     }
 
-    public SQLiteDatabase db;
+    public ArrayList<Item> readFromDatabase() {
+        ArrayList<Item> items = new ArrayList<>();
+
+        Cursor cursor;
+        cursor = db.rawQuery("select * from " + ItemDatabase.TABLE, null);
+        cursor.moveToFirst();
+
+        while (!cursor.isAfterLast()) {
+            items.add(new Item(cursor.getLong(0), cursor.getString(1),
+                    cursor.getString(2)));
+            cursor.moveToNext();
+        }
+        cursor.close();
+
+        return items;
+    }
 }

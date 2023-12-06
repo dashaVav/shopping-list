@@ -12,14 +12,16 @@ import java.util.ArrayList;
 public class ItemAdapter extends RecyclerView.Adapter<ItemViewHolder> {
     private final ArrayList<Item> items;
     private final OnItemClickListener onItemClickListener;
+    ItemDatabase itemDatabase;
 
     public interface OnItemClickListener {
         void onItemClick(int position);
     }
 
-    public ItemAdapter(ArrayList<Item> myDataset, OnItemClickListener listener) {
-        items = myDataset;
+    public ItemAdapter(OnItemClickListener listener, ItemDatabase itemDatabase) {
         onItemClickListener = listener;
+        this.itemDatabase = itemDatabase;
+        items = this.itemDatabase.readFromDatabase();
     }
 
     @Override
@@ -51,7 +53,11 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemViewHolder> {
         vh.checkBoxItem.setOnCheckedChangeListener(null);
 
         vh.checkBoxItem.setOnCheckedChangeListener(
-                (buttonView, isChecked) -> items.get(position).setIsChecked(isChecked));
+                (buttonView, isChecked) -> {
+                    items.get(position).setIsChecked(isChecked);
+                    itemDatabase.updateItem(items.get(position));
+                });
+
         vh.imageViewDelete.setOnClickListener(v -> {
             int adapterPosition = vh.getAdapterPosition();
             if (adapterPosition != RecyclerView.NO_POSITION) {
@@ -63,18 +69,20 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemViewHolder> {
         vh.checkBoxItem.setChecked(items.get(position).getIsChecked());
     }
 
-    public void addItem(Item newItem) {
+    public void addItem(String itemText) {
+        Item newItem = itemDatabase.saveItem(itemText);
         items.add(newItem);
         notifyItemInserted(getItemCount() - 1);
     }
 
-    public Item updateItemText(int position, String newText) {
+    public void updateItemText(int position, String newText) {
         items.get(position).setText(newText);
+        itemDatabase.updateItem(items.get(position));
         notifyItemChanged(position);
-        return items.get(position);
     }
 
     public void removeItem(int position) {
+        itemDatabase.delete(items.get(position));
         items.remove(position);
         notifyItemRemoved(position);
     }

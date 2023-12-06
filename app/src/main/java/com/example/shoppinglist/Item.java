@@ -7,27 +7,23 @@ public class Item {
     private String text;
     private Boolean isChecked;
 
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public long getId(){
-        return id;
-    }
-
     public Item(String name) {
-        this.isChecked = false;
         this.text = name;
+        this.isChecked = false;
     }
 
     public Item(long id, String name, String isChecked) {
         this.id = id;
-        this.isChecked = Objects.equals(isChecked, "1");
         this.text = name;
+        this.isChecked = Objects.equals(isChecked, "1");
     }
 
     public void setText(String text) {
         this.text = text;
+    }
+
+    public String getText() {
+        return text;
     }
 
     public void setIsChecked(Boolean isChecked) {
@@ -38,15 +34,15 @@ public class Item {
         return isChecked;
     }
 
-    public String getText() {
-        return text;
+    public int getIsCheckedAsInt() {
+        return isChecked ? 1 : 0;
     }
 
-    public int getIsCheckedAsInt() {
-        if (isChecked) {
-            return 1;
-        } else {
-            return 0;
-        }
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public long getId() {
+        return id;
     }
 }
