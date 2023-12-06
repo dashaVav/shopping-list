@@ -4,6 +4,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemViewHolder> {
         return items.size();
     }
 
+    @NonNull
     @Override
     public ItemViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
@@ -54,20 +56,22 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemViewHolder> {
             int adapterPosition = vh.getAdapterPosition();
             if (adapterPosition != RecyclerView.NO_POSITION) {
                 removeItem(adapterPosition);
+
             }
         });
 
         vh.checkBoxItem.setChecked(items.get(position).getIsChecked());
     }
 
-    public void addItem(String text) {
-        items.add(new Item(text));
+    public void addItem(Item newItem) {
+        items.add(newItem);
         notifyItemInserted(getItemCount() - 1);
     }
 
-    public void updateItemText(int position, String newText) {
+    public Item updateItemText(int position, String newText) {
         items.get(position).setText(newText);
         notifyItemChanged(position);
+        return items.get(position);
     }
 
     public void removeItem(int position) {

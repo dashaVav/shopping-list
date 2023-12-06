@@ -1,5 +1,7 @@
 package com.example.shoppinglist;
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,23 +16,44 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
-
     private ItemAdapter mAdapter;
+    DatabaseHelper databaseHelper;
+    SQLiteDatabase db;
+    Cursor userCursor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        databaseHelper = new DatabaseHelper(getApplicationContext());
+
         setContentView(R.layout.main_activity);
 
         RecyclerView mRecyclerView = findViewById(R.id.my_recycler_view);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        ArrayList<Item> initialContent = new ArrayList<>();
+        ArrayList<Item> initialContent = readFromDatabase();
         mAdapter = new ItemAdapter(initialContent, this::showEditItemInput);
         mRecyclerView.setAdapter(mAdapter);
 
         Button addButton = findViewById(R.id.addButton);
         addButton.setOnClickListener(v -> showAddItemInput());
+    }
+
+    private ArrayList<Item> readFromDatabase() {
+        db = databaseHelper.getReadableDatabase();
+        databaseHelper.db = db;
+        ArrayList<Item> items = new ArrayList<>();
+
+        userCursor =  db.rawQuery("select * from "+ DatabaseHelper.TABLE, null);
+        userCursor.moveToFirst();
+
+        while (!userCursor.isAfterLast()) {
+            items.add(new Item(userCursor.getLong(0), userCursor.getString(1), userCursor.getString(2)));
+            userCursor.moveToNext();
+        }
+        userCursor.close();
+
+        return items;
     }
 
     private void showAddItemInput() {
@@ -58,9 +81,9 @@ public class MainActivity extends AppCompatActivity {
             String editedItemName = editTextNewItem.getText().toString().trim();
             if (!editedItemName.isEmpty()) {
                 if (isEdit) {
-                    mAdapter.updateItemText(position, editedItemName);
+                    databaseHelper.updateItem(db, mAdapter.updateItemText(position, editedItemName));
                 } else {
-                    mAdapter.addItem(editedItemName);
+                    mAdapter.addItem(databaseHelper.saveItem(db, editedItemName));
                 }
             }
         });
